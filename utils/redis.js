@@ -1,18 +1,13 @@
+// utils/redis.js
 const redis = require('redis');
 const { promisify } = require('util');
 
 class RedisClient {
     constructor() {
-        this.client = redis.createClient({
-            url: process.env.REDIS_URL || 'redis://localhost:6379'
-        });
+        this.client = redis.createClient();
 
         this.client.on('error', (error) => {
             console.log(`Redis could not connect to the server: ${error.message}`);
-        });
-
-        this.client.on('connect', () => {
-            console.log('Redis connected successfully');
         });
 
         // Promisify the Redis client methods
@@ -22,33 +17,21 @@ class RedisClient {
     }
 
     isAlive() {
+        // Redis does not have a built-in isConnected method
+        // This is a simple way to check if the client is alive
         return this.client.connected;
     }
 
     async get(key) {
-        try {
-            const value = await this.getAsync(key);
-            return value;
-        } catch (error) {
-            console.error(`Error getting key ${key}: ${error.message}`);
-            return null;
-        }
+        return await this.getAsync(key);
     }
 
     async set(key, value, duration) {
-        try {
-            await this.setAsync(key, value, 'EX', duration);
-        } catch (error) {
-            console.error(`Error setting key ${key}: ${error.message}`);
-        }
+        await this.setAsync(key, value, 'EX', duration);
     }
 
     async del(key) {
-        try {
-            await this.delAsync(key);
-        } catch (error) {
-            console.error(`Error deleting key ${key}: ${error.message}`);
-        }
+        await this.delAsync(key);
     }
 }
 
