@@ -1,11 +1,13 @@
 import crypto from 'crypto';
 import dbClient from '../utils/db.js';
+import AuthController from './AuthController.js';
+import redisClient from '../utils/redis.js';
+import { error } from 'console';
+import {ObjectId} from 'mongodb'
 
 class UsersController {
   static async postNew(req, res) {
-    console.log('Received POST /users request');
-    console.log('Request body:', req.body);
-
+    
     const { email, password } = req.body;
 
     if (!email) {
@@ -41,6 +43,23 @@ class UsersController {
       console.error('Error processing request:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
+  }
+
+  static async getMe(req, res){
+    const token = req.headers['x-token'];
+    if(!token){
+        return res.status(401).json({error: "Unauthorized"})
+    }
+    const userId = await redisClient.get(`auth_${token}`);
+
+    if(!userId){
+        return res.status(401).json({error: "Unauthorized"});
+    }
+    const user = dbClient.db.collection('users').findOne({_id: new ObjectId(userId)});
+    if(!user){
+        return res.status(401).json({error: 'Unauthorized'})
+    }
+    return res.status(200).json({id: user._id, email: user.email})
   }
 }
 
