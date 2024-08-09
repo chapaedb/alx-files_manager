@@ -1,4 +1,4 @@
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 class DBClient {
@@ -30,6 +30,9 @@ class DBClient {
 
   async nbFiles() {
     return this.db.collection('files').countDocuments();
+  }
+  getObjectId(id) {
+    return new ObjectId(id);
   }
 }
 
